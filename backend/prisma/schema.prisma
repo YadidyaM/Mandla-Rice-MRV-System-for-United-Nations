@@ -1,0 +1,342 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  phone     String?  @unique
+  password  String
+  role      Role     @default(FARMER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profile information
+  profile Profile?
+
+  // Relationships
+  farms Farm[]
+  notifications Notification[]
+  sentNotifications Notification[] @relation("NotificationSender")
+  carbonCredits CarbonCredit[] @relation("FarmerCredits")
+  purchases Transaction[] @relation("BuyerTransactions")
+  sales Transaction[] @relation("SellerTransactions")
+
+  @@map("users")
+}
+
+model Profile {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @unique @db.ObjectId
+  firstName       String
+  lastName        String
+  language        String   @default("en")
+  village         String
+  block           String
+  district        String
+  state           String
+  tribalGroup     String?
+  isMarginalised  Boolean  @default(false)
+  irrigationAccess Boolean  @default(false)
+  hasSmartphone   Boolean  @default(false)
+  preferredContact PreferredContact @default(WHATSAPP)
+  profilePhoto    String?
+  dateOfBirth     DateTime?
+  education       Education?
+  farmingExperience Int?
+  familySize      Int?
+  landOwnership   LandOwnership?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Farm {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  location    String
+  area        Float
+  areaUnit    AreaUnit @default(ACRES)
+  soilType    SoilType
+  cropType    CropType
+  irrigationType IrrigationType?
+  farmerId    String   @db.ObjectId
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  farmer User @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  carbonCredits CarbonCredit[]
+
+  @@map("farms")
+}
+
+model CarbonCredit {
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  description       String
+  quantity          Int
+  availableQuantity Int
+  pricePerCredit    Float
+  totalPrice        Float
+  currency          Currency          @default(INR)
+  status            CreditStatus      @default(LISTED)
+  verificationLevel VerificationLevel @default(BASIC)
+  farmId            String            @db.ObjectId
+  farmerId          String            @db.ObjectId
+  projectType       ProjectType
+  methodology       String
+  vintage           Int // Year of carbon sequestration
+  certification     String[]
+  images            String[]
+  documents         String[]
+  expiresAt         DateTime?
+  buyerId           String?           @db.ObjectId
+  buyerName         String?
+  soldAt            DateTime?
+  transactionId     String?
+  
+  // Blockchain integration fields
+  blockchainTokenId String?           @unique
+  blockchainTransactionHash String?
+  blockchainBlockNumber Int?
+  isTokenized       Boolean           @default(false)
+  tokenizedAt       DateTime?
+  blockchainVerified Boolean          @default(false)
+  blockchainVerifiedAt DateTime?
+  verificationHash  String?
+  
+  // MRV and satellite data
+  mrvReportHash     String?
+  satelliteDataHash String?
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relationships
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  farmer User @relation("FarmerCredits", fields: [farmerId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("carbon_credits")
+}
+
+model Transaction {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  carbonCreditId  String           @db.ObjectId
+  sellerId        String           @db.ObjectId
+  buyerId         String           @db.ObjectId
+  quantity        Int
+  pricePerCredit  Float
+  totalAmount     Float
+  currency        String
+  status          TransactionStatus @default(PENDING)
+  paymentMethod   PaymentMethod    @default(ESCROW)
+  escrowId        String?
+  
+  // Blockchain integration fields
+  blockchainEscrowId String?       @unique
+  blockchainTransactionHash String?
+  blockchainBlockNumber Int?
+  blockchainGasUsed String?
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  completedAt     DateTime?
+
+  // Relationships
+  carbonCredit CarbonCredit @relation(fields: [carbonCreditId], references: [id], onDelete: Cascade)
+  seller User @relation("SellerTransactions", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyer User @relation("BuyerTransactions", fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model Notification {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  type        NotificationType
+  title       String
+  message     String
+  priority    Priority         @default(MEDIUM)
+  category    Category
+  userId      String           @db.ObjectId
+  senderId    String?          @db.ObjectId
+  isRead      Boolean          @default(false)
+  isDelivered Boolean          @default(false)
+  deliveryChannels DeliveryChannel[]
+  metadata    Json?
+  scheduledAt DateTime?
+  deliveredAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sender User? @relation("NotificationSender", fields: [senderId], references: [id])
+
+  @@map("notifications")
+}
+
+// Enums
+enum Role {
+  FARMER
+  BUYER
+  ADMIN
+  MRV_AGENT
+}
+
+enum PreferredContact {
+  WHATSAPP
+  SMS
+  EMAIL
+  PHONE
+}
+
+enum Education {
+  PRIMARY
+  SECONDARY
+  HIGHER_SECONDARY
+  GRADUATE
+  POST_GRADUATE
+  ILLITERATE
+}
+
+enum LandOwnership {
+  OWNED
+  LEASED
+  SHARECROPPING
+  FOREST_RIGHTS
+}
+
+enum AreaUnit {
+  ACRES
+  HECTARES
+  BIGHAS
+  KANALS
+}
+
+enum SoilType {
+  LOAMY
+  CLAYEY
+  SANDY
+  SILTY
+  BLACK_SOIL
+  RED_SOIL
+  LATERITE
+}
+
+enum CropType {
+  RICE
+  WHEAT
+  MAIZE
+  PULSES
+  OILSEEDS
+  VEGETABLES
+  FRUITS
+  MIXED
+}
+
+enum IrrigationType {
+  CANAL
+  TUBEWELL
+  WELL
+  RAINFED
+  SPRINKLER
+  DRIP
+}
+
+enum CreditStatus {
+  LISTED
+  SOLD
+  PENDING
+  VERIFIED
+  UNVERIFIED
+}
+
+enum VerificationLevel {
+  BASIC
+  STANDARD
+  PREMIUM
+  GOLD
+}
+
+enum ProjectType {
+  RICE_FARMING
+  FORESTRY
+  RENEWABLE_ENERGY
+  WASTE_MANAGEMENT
+  SOIL_CARBON
+}
+
+enum Currency {
+  INR
+  USD
+  EUR
+}
+
+enum TransactionStatus {
+  PENDING
+  ESCROW
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentMethod {
+  ESCROW
+  DIRECT
+  BANK_TRANSFER
+  UPI
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  FARM_UPDATE
+  MRV_REPORT
+  CARBON_CREDIT
+  WEATHER_ALERT
+  MARKET_UPDATE
+  SECURITY_ALERT
+}
+
+enum Priority {
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum Category {
+  SYSTEM
+  FARM
+  MRV
+  CARBON
+  WEATHER
+  MARKET
+  SECURITY
+}
+
+enum DeliveryChannel {
+  IN_APP
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+}

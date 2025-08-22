@@ -1,0 +1,58 @@
+{
+  "name": "mandla-rice-mrv-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for Mandla Rice MRV carbon credit system",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:mumbai": "hardhat run scripts/deploy.ts --network mumbai",
+    "deploy:polygon": "hardhat run scripts/deploy.ts --network polygon",
+    "verify": "hardhat verify --network mumbai",
+    "coverage": "hardhat coverage",
+    "lint": "eslint '**/*.{js,ts}' --fix",
+    "lint:sol": "solhint 'contracts/**/*.sol'",
+    "size": "hardhat size-contracts",
+    "gas": "hardhat gas-reporter"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
+    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.2.0",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/chai": "^4.3.20",
+    "@types/mocha": "^10.0.10",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.0",
+    "hardhat": "^2.19.0",
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solhint": "^4.5.4",
+    "solidity-coverage": "^0.8.5",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "@openzeppelin/contracts-upgradeable": "^5.0.1",
+    "dotenv": "^16.3.1"
+  },
+  "keywords": [
+    "blockchain",
+    "carbon-credits",
+    "erc1155",
+    "polygon",
+    "smart-contracts",
+    "climate-change",
+    "agriculture"
+  ],
+  "author": "Team Mandla MRV",
+  "license": "MIT",
+  "type": "module"
+}

@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database with PostGIS extension
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: mandla-postgres
+    environment:
+      POSTGRES_DB: mandla_mrv_db
+      POSTGRES_USER: mandla_user
+      POSTGRES_PASSWORD: secure_password_123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mandla-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mandla_user -d mandla_mrv_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for caching and job queues
+  redis:
+    image: redis:7-alpine
+    container_name: mandla-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mandla-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mandla-backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://mandla_user:secure_password_123@postgres:5432/mandla_mrv_db
+      REDIS_URL: redis://redis:6379
+      PORT: 4000
+      JWT_SECRET: dev_jwt_secret_change_in_production
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      WEB3_PROVIDER_URL: ${WEB3_PROVIDER_URL}
+      WEB3_PRIVATE_KEY: ${WEB3_PRIVATE_KEY}
+      PINATA_API_KEY: ${PINATA_API_KEY}
+      PINATA_SECRET_API_KEY: ${PINATA_SECRET_API_KEY}
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    networks:
+      - mandla-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: npm run dev
+
+  # Frontend React application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mandla-frontend
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+      VITE_WALLETCONNECT_PROJECT_ID: ${VITE_WALLETCONNECT_PROJECT_ID}
+      VITE_CHAIN_ID: 80001
+      VITE_CARBON_CREDIT_CONTRACT_ADDRESS: ${VITE_CARBON_CREDIT_CONTRACT_ADDRESS}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - mandla-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    command: npm run dev
+
+  # IPFS node for decentralized storage
+  ipfs:
+    image: ipfs/kubo:latest
+    container_name: mandla-ipfs
+    ports:
+      - "4001:4001"
+      - "5001:5001"
+      - "8080:8080"
+    volumes:
+      - ipfs_data:/data/ipfs
+    networks:
+      - mandla-network
+    restart: unless-stopped
+    environment:
+      IPFS_PROFILE: server
+
+  # Hardhat blockchain node for development
+  hardhat:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    container_name: mandla-hardhat
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./contracts:/app
+      - /app/node_modules
+    networks:
+      - mandla-network
+    restart: unless-stopped
+    command: npx hardhat node --hostname 0.0.0.0
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  ipfs_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_logs:
+    driver: local
+
+networks:
+  mandla-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

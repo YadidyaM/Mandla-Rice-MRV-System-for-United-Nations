@@ -178,14 +178,6 @@ npm run dev
 - [ ] Advanced analytics
 - [ ] Policy advocacy
 
-## 📚 **Documentation**
-
-- [📖 System Architecture](docs/ARCHITECTURE.md)
-- [�� Carbon Marketplace](docs/CARBON_CREDIT_MARKETPLACE_SYSTEM.md)
-- [🌾 Farm Management](docs/FARM_REGISTRATION_SYSTEM.md)
-- [�� MRV System](docs/MRV_SYSTEM.md)
-- [👥 Admin Dashboard](docs/ADMIN_DASHBOARD_SYSTEM.md)
-- [🔗 API Reference](docs/API_REFERENCE.md)
 
 ## 🧪 **Testing**
 
@@ -249,9 +241,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - 🌱 **Star** this repository
 - 🚀 **Fork** and contribute
-- �� **Contact**: [your-email@example.com]
-- �� **Website**: [your-website.com]
-- �� **Social**: [@your-handle]
+- �� **Contact**: [yadikrish@gmail.com]
 
 ---
 

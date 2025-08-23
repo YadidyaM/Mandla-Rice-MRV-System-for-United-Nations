@@ -53,12 +53,12 @@ export class LangChainAgentService {
   constructor() {
     // this.prisma = prisma;
     
-    // Initialize OpenAI LLM
+    // Initialize OpenAI LLM with GPT-5
     this.llm = new ChatOpenAI({
       openAIApiKey: config.langchain.openaiApiKey,
-      modelName: "gpt-4-turbo-preview",
+      modelName: "gpt-5",
       temperature: 0.1,
-      maxTokens: 2000,
+      maxTokens: 4000, // GPT-5 supports higher token limits
     });
 
     // Initialize services

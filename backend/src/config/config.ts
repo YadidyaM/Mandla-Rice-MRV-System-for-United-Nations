@@ -53,6 +53,12 @@ const envSchema = Joi.object({
   GAS_LIMIT: Joi.number().default(500000),
   GAS_PRICE: Joi.number().default(20000000000),
 
+  // Soroban Configuration (Stellar Blockchain)
+  SOROBAN_RPC_URL: Joi.string().uri().default('https://soroban-testnet.stellar.org'),
+  SOROBAN_CONTRACT_ID: Joi.string().optional().allow(''),
+  SOROBAN_NETWORK_PASSPHRASE: Joi.string().default('Test SDF Network ; September 2015'),
+  SOROBAN_ENABLED: Joi.boolean().default(true),
+
   // IPFS Configuration (Multiple providers supported)
   PINATA_API_KEY: Joi.string().optional().allow(''),
   PINATA_SECRET_API_KEY: Joi.string().optional().allow(''),
@@ -236,6 +242,12 @@ export const config = {
     carbonCreditContractAddress: env.CARBON_CREDIT_CONTRACT_ADDRESS,
     gasLimit: env.GAS_LIMIT,
     gasPrice: env.GAS_PRICE,
+  },
+  soroban: {
+    rpcUrl: env.SOROBAN_RPC_URL,
+    contractId: env.SOROBAN_CONTRACT_ID,
+    networkPassphrase: env.SOROBAN_NETWORK_PASSPHRASE,
+    enabled: env.SOROBAN_ENABLED,
   },
 
   // IPFS (Multiple providers supported)

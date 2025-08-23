@@ -1,0 +1,43 @@
+[package]
+name = "carbon-credit-token"
+version = "0.1.0"
+edition = "2021"
+authors = ["Mandla Rice MRV System Team"]
+description = "Carbon Credit Token Smart Contract for Equitable Finance on Stellar Blockchain"
+license = "MIT"
+repository = "https://github.com/YadidyaM/Mandla-Rice-MRV-System-for-United-Nations"
+keywords = ["soroban", "stellar", "blockchain", "carbon-credits", "equitable-finance"]
+categories = ["blockchain", "finance"]
+
+[dependencies]
+soroban-sdk = "20.2.0"
+stellar-macros = "0.1.0"
+stellar-tokens = "0.1.0"
+
+[dev-dependencies]
+soroban-sdk = { version = "20.2.0", features = ["testutils"] }
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true
+
+[profile.testnet]
+inherits = "release"
+debug-assertions = true
+
+[profile.mainnet]
+inherits = "release"
+debug-assertions = false
